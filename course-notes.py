@@ -54,7 +54,9 @@ class Note:
         self.children.append(note)
 
     def to_path_string(self):
-        return format_path(self.source, self.course, self.section, self.lesson)
+        if self.section != "0":
+            return format_path(self.source, self.course, self.section, self.lesson)
+        return format_path(self.source, self.course, self.section)
 
     def to_kebab_string(self):
         return format_file_name(self.section, self.lesson, self.get_title())
@@ -65,21 +67,21 @@ class Note:
     def get_md_tags(self):
         string = "tags:\n"
         for tag in self.tags:
-            string += "  - {0}\n".format(tag)
+            string += f"  - {tag}\n"
         return string
     
     def get_md_aliases(self):
         string = "aliases:\n"
         for alias in self.aliases:
-            string += "  - {0}\n".format(alias)
+            string += f"  - {alias}\n"
         return string
 
     def get_md_properties(self):
         return (
-            "---\n" +
-            self.get_md_tags() +
-            self.get_md_aliases() +
-            self.get_md_children() +
+            "---\n" 
+            f"{self.get_md_tags()}" 
+            f"{self.get_md_aliases()}" 
+            f"{self.get_md_children()}" 
             "---\n\n"
         )
 
@@ -87,8 +89,8 @@ class Note:
         if len(self.children) > 0:
             string = "lessons:\n" if self.is_section() else "sections:\n"
             for child in self.children:
-                link = '"[[{}|{}]]"'.format(child.to_kebab_string(), child.name)
-                string += "  - {}\n".format(link)
+                link = f'"[[{child.to_kebab_string()}|{child.name}]]"'
+                string += f"  - {link}\n"
             return string 
         return ""
     
@@ -101,14 +103,14 @@ class Note:
         file.write(file_content);
         file.close()
  
-if len(sys.argv) != 2:
+if len(sys.argv) != 2 or not sys.argv[1].endswith(".crs"):
     print("Specify .crs file")
     sys.exit()
 
 try:
     notes_structure = open(sys.argv[1], "r")
 except:
-    print("Could not open {}", sys.argv[1])
+    print(f"Could not open {sys.argv[1]}")
     sys.exit()
 
 notes_lines = notes_structure.readlines()
