@@ -1,3 +1,6 @@
+import sys
+import os
+
 def parse_line(line):
     content = line.split(":")
     section = content[0].split()[1].strip() if len(content) > 1 and line.find("Section") >= 0 else "0"
@@ -77,7 +80,7 @@ class Note:
             self.get_md_tags() +
             self.get_md_aliases() +
             self.get_md_children() +
-            "---\n"
+            "---\n\n"
         )
 
     def get_md_children(self):
@@ -89,19 +92,25 @@ class Note:
             return string 
         return ""
     
-    def to_file(self):
-        """
-        file = open(self.to_kebab_string(), "x");
-        file.write(self.get_md_properties());
-        """
-        file_name = "{}.md".format(self.to_kebab_string())
+    def to_file(self, folder):
+        file_name = f"./{folder}/{self.to_kebab_string()}.md"
         file_props = self.get_md_properties() 
-        file_content = "# {}\n".format(self.get_title())
-        print(file_name)
-        print(file_props)
-        print(file_content)
-    
-notes_structure = open("sample-course", "r")
+        file_content = f"# {self.get_title()}\n"
+        file = open(file_name, "x");
+        file.write(file_props);
+        file.write(file_content);
+        file.close()
+ 
+if len(sys.argv) != 2:
+    print("Specify .crs file")
+    sys.exit()
+
+try:
+    notes_structure = open(sys.argv[1], "r")
+except:
+    print("Could not open {}", sys.argv[1])
+    sys.exit()
+
 notes_lines = notes_structure.readlines()
 
 institution_name = notes_lines[0].rstrip()
@@ -110,12 +119,15 @@ course_name = notes_lines[1][len(course_code) + 1:].strip()
 
 notes = []
 
-notes.append(Note(institution_name, course_code, course_name, "0", "0"))
+course_note = Note(institution_name, course_code, course_name, "0", "0")
+course_note.add_tag(course_note.to_path_string())
+course_note.add_alias(course_note.name)
+notes.append(course_note)
 
 current_section = None
 
 for line in notes_lines[2:]:
-    note = Note.from_string(institution_name, course_code, line);
+    note = Note.from_string(institution_name, course_code, line)
 
     if note.is_section(): 
         current_section = note
@@ -128,7 +140,9 @@ for line in notes_lines[2:]:
     note.add_alias(note.name)
     notes.append(note)
 
+os.mkdir(f"./{course_name.lower().replace(" ", "-")}")
+print(os.getcwd())
 for note in notes:
-    note.to_file()
+    note.to_file(course_name.lower().replace(" ", "-"))
 
 
